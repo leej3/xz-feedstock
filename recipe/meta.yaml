@@ -12,15 +12,25 @@ source:
     - 0002-Add-gettimeofday-for-VS2008.patch
 
 build:
+{% if bootstrapping == 'yes' %}
+  # Please increment by two
+  number: 0
+  string: h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}_bootstrapping
+{% else %}
+  # Keep above the number of the _bootstrapping package
   number: 1
+{% endif %}
   run_exports:
     # XZ's track record of backcompat is very good.  Keep default pins (next major version)
     #    https://abi-laboratory.pro/tracker/timeline/xz/
     - {{ pin_subpackage('xz') }}
+  script_env:
+    - BOOTSTRAPPING={{ bootstrapping }}
 
 requirements:
   build:
     - {{ compiler('c') }}
+{% if bootstrapping != 'yes' %}
     - c99-to-c89  # [win and vc<14]
     - cmake  # [win]
     - ninja  # [win]
@@ -29,6 +39,7 @@ requirements:
     - libtool  # [not win]
   host:
     - msinttypes  # [win and vc<14]
+{% endif %}
 
 outputs:
   - name: xz
@@ -55,6 +66,7 @@ outputs:
     requirements:
       build:
         - {{ compiler('c') }}
+{% if bootstrapping != 'yes' %}
         - c99-to-c89  # [win and vc<14]
         - cmake  # [win]
         - ninja  # [win]
@@ -65,6 +77,7 @@ outputs:
         - {{ pin_subpackage('xz', exact=True) }}
       run:
         - {{ pin_subpackage('xz', exact=True) }}
+{% endif %}
     test:
       commands:
         - if not exist %LIBRARY_PREFIX%\lib\liblzma_static.lib exit 1  # [win]
